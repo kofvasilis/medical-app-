@@ -1,0 +1,110 @@
+import React, { useEffect, useState } from 'react'
+import SignOut from '../components/Auth/SignOut'
+import Box from '@mui/material/Box';
+import {InputLabel, MenuItem, FormControl, Select, Typography, Button} from '@mui/material';
+
+import { db } from '../components/config/firebase';
+import { onValue, ref , get} from '@firebase/database';
+
+
+
+const Home = () => {
+    
+    const [userVotes, setUserVotes] = useState({}); 
+    const [selectedDrug, setSelectedDrug] = useState(null);
+    const [drugs, setDrugs] = useState([]);
+    const [sideEffectVotes, setSideEffectVotes] = useState([]);
+    const [selectedVote, setSelectedVote] = useState(null);
+
+    useEffect(() => {
+        const drugsRef = ref(db, '/');
+        onValue(drugsRef, (snapshot) => {
+            const drugsData = snapshot.val();
+            setDrugs(drugsData);
+        });
+    }, []);
+
+    useEffect(() => {
+        if (selectedDrug) {
+            const sideEffectVotesRef = ref(db, `/${selectedDrug}/votes`);
+            onValue(sideEffectVotesRef, (snapshot) => {
+                const sideEffectVotesData = snapshot.val();
+                setSideEffectVotes(sideEffectVotesData);
+            });
+        } else {
+            setSideEffectVotes([]);
+        }
+    }, [selectedDrug]);
+
+    const handleChange = (event) => {
+        setSelectedDrug(event.target.value);
+    };
+
+    const handleVoteSelect = (event) => {
+        setSelectedVote(event.target.value);
+    };
+
+    const handleViewVotes = () => {
+        const selectedVoteRef = ref(db, `/${selectedDrug}/votes/${selectedVote}`);
+        onValue(selectedVoteRef, (snapshot) => {
+            const userVotesData = snapshot.val();
+            setUserVotes(userVotesData);
+        });
+    };
+
+    return (
+        <>
+            <h1>Home</h1>
+            <SignOut />
+            <div>
+                <h1>Search for Medicine</h1>
+                <Box sx={{ minWidth: 120 }}>
+                    <FormControl fullWidth>
+                        <InputLabel>Select a drug</InputLabel>
+                        <Select
+                            value={selectedDrug}
+                            label="Select a drug"
+                            onChange={handleChange}
+                        >
+                            {Object.keys(drugs).map((key) => (
+                                <MenuItem key={key} value={key}>{drugs[key].name}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Box>
+            </div>
+            {selectedDrug && (
+                <div>
+                    <h1>Drug:</h1>
+                    <p>{drugs[selectedDrug].name}</p>
+                    <div>
+                        <h1>Side Effects:</h1>
+                        {userVotes && Object.keys(userVotes).map((key) => (
+                                <div key={key}>
+                                    <Typography variant="subtitle1">{key}</Typography>
+                                    <Typography variant="body1">{userVotes[key]}</Typography>
+                                </div>
+                            ))}
+                    </div>
+                    <Box sx={{ minWidth: 120 }}>
+                        <FormControl fullWidth>
+                            <InputLabel>Select Email-Address</InputLabel>
+                            <Select
+                                value={selectedVote}
+                                label="Select Email-Address"
+                                onChange={handleVoteSelect}
+                            >
+                                {Object.keys(sideEffectVotes).map((key) => (
+                                    <MenuItem key={key} value={key}>{key}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Box>
+                    <Button onClick={handleViewVotes}>View Votes</Button>
+                </div>
+            )}
+        </>
+    )
+}
+
+export default Home
