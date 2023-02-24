@@ -29,7 +29,12 @@ const Home = () => {
             const sideEffectVotesRef = ref(db, `/${selectedDrug}/votes`);
             onValue(sideEffectVotesRef, (snapshot) => {
                 const sideEffectVotesData = snapshot.val();
-                setSideEffectVotes(sideEffectVotesData);
+                if (sideEffectVotesData) {
+                    setSideEffectVotes(sideEffectVotesData);
+                } else {
+                    alert("No votes for this drug's side effects yet.");
+                    setSideEffectVotes([]);
+                }
             });
         } else {
             setSideEffectVotes([]);
@@ -100,7 +105,7 @@ const Home = () => {
                             </Select>
                         </FormControl>
                     </Box>
-                    <Button onClick={handleViewVotes}>View Votes</Button>
+                    <Button onClick={handleViewVotes}>View User Side-Effects</Button>
                 </div>
             )}
         </>
